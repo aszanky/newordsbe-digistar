@@ -1,6 +1,6 @@
 # NEWORDS GO BE
 
-Golang Backend service
+Newords services with Golang
 
 How to run
 
@@ -12,5 +12,11 @@ In Local
 
 To do test
 `go test -v ./...`
+
+Tech Stack
+- Golang
+- PostgreSQL
+- gin gonic as API Framework
+
 
 Thank You!
