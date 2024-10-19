@@ -6,6 +6,8 @@ DevOps Practice: CI/CD using GitHub Actions Deploy to DockerHub then to Kubernet
 1. Clone this repository
 https://github.com/aszanky/newordsbe-digistar.git
 
+2. Create Dockerfile
+
 2. In this hands on, we want to use PostgreSQL,
 
     You need to setup PostgreSQL in your VM or Cloud VM like Google Compute Engine (GCE), AWS EC2, etc
