@@ -1,0 +1,112 @@
+name: Go CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  GKE_CLUSTER: newords-digistar
+  GKE_ZONE: us-central1-c
+  GCP_PROJECT_ID: absolute-bloom-355304
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run tests
+        run: go test -v ./...
+  
+#   sonarqube:
+#     name: Sonarqube
+#     needs: test
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#         with:
+#           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+#       - uses: sonarsource/sonarqube-scan-action@master
+#         env:
+#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+#       # If you wish to fail your job when the Quality Gate is red, uncomment the
+#       # following lines. This would typically be used to fail a deployment.
+#       # - uses: sonarsource/sonarqube-quality-gate-action@master
+#       #   timeout-minutes: 5
+#       #   env:
+#       #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  docker-build:
+    name: Build and Push Docker Image
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+    
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Create .env file
+        run: |
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_PGDRIVER=${{ secrets.DB_PGDRIVER }}" >> .env
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ secrets.DOCKER_USERNAME }}/newords-go-be:latest
+          build-args: |
+            ENV_FILE=.env
+
+  deploy:
+    name: Deploy to GKE
+    needs: docker-build
+    runs-on: ubuntu-latest
+    # environment: production
+
+    steps:
+        # Step 1: Checkout the repository
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Authenticate to Google Cloud
+          uses: google-github-actions/auth@v2
+          with:
+            project_id: ${{ env.GCP_PROJECT_ID }}
+            credentials_json: ${{ secrets.GKE_SA_KEY }}
+
+        # Step 3: Authenticate kubectl to use GKE credentials
+        - name: Authenticate to GKE
+          uses: google-github-actions/get-gke-credentials@v2
+          with:
+            cluster_name: ${{ env.GKE_CLUSTER }}
+            location: ${{ env.GKE_ZONE }}
+            credentials: ${{ secrets.GKE_SA_KEY }}
+
+        # Step 4: Deploy the application using kubectl
+        - name: Deploy to GKE
+          run: |
+            kubectl apply -f k8s/deployment.yaml
