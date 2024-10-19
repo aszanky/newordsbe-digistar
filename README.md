@@ -6,10 +6,6 @@ How to run
 
 `go run main.go`
 
-In Local 
-
-`docker compose up`
-
 To do test
 `go test -v ./...`
 
@@ -18,5 +14,6 @@ Tech Stack
 - PostgreSQL
 - gin gonic as API Framework
 
+For Hands on lab, go to folder md/README.md
 
 Thank You!
