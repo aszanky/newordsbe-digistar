@@ -28,8 +28,8 @@ func main() {
 	handler := handler.NewHandler(usecase)
 
 	//RUN SERVER
-	log.Println("Starting newords services on PORT 8096")
-	err = handler.Start(":8096")
+	log.Println("Starting newords services on PORT 8099")
+	err = handler.Start(":8099")
 	if err != nil {
 		log.Fatal(err)
 	}
