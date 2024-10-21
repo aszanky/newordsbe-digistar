@@ -77,7 +77,7 @@ jobs:
           context: .
           file: Dockerfile
           platforms: linux/amd64,linux/arm64
-          tags: ${{ secrets.DOCKER_USERNAME }}/newords-go-be:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/newordsbe-digistar:latest
           build-args: |
             ENV_FILE=.env
 
